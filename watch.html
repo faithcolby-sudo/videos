@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ver Video</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000; color: #fff; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+    h2 { margin-bottom: 16px; color: #adf; text-align: center; }
+    #player { width: 100%; max-width: 860px; aspect-ratio: 16/9; }
+    #player iframe { width: 100%; height: 100%; border: none; }
+    a { margin-top: 20px; color: #888; text-decoration: none; font-size: 0.9em; }
+    a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <h2 id="titulo">Cargando...</h2>
+  <div id="player"></div>
+  <a href="index.html">← Volver al portal</a>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = parseInt(params.get("v"));
+    const videos = JSON.parse(localStorage.getItem("videos") || "[]");
+    const video = videos.find(v => v.id === id);
+
+    if (video) {
+      document.title = video.titulo;
+      document.getElementById("titulo").textContent = video.titulo;
+      document.getElementById("player").innerHTML =
+        `<iframe src="${video.src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+    } else {
+      document.getElementById("titulo").textContent = "Video no encontrado";
+    }
+  </script>
+</body>
+</html>
