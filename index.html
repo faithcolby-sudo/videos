@@ -6,106 +6,142 @@
   <title>Mi Portal de Videos</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; }
+
+    /* AGREGAR VIDEO */
+    .agregar {
+      background: #222;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    h1 { font-size: 1.4em; margin-bottom: 6px; color: #eee; }
-    #titulo-video {
-      font-size: 1.1em;
-      margin-bottom: 14px;
-      color: #adf;
-      text-align: center;
-    }
-    #frame-container {
+    .agregar input {
       width: 100%;
-      max-width: 800px;
-      aspect-ratio: 16/9;
-      background: #000;
-    }
-    #frame-container iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .nav {
-      display: flex;
-      gap: 20px;
-      margin-top: 18px;
-    }
-    .nav button {
-      padding: 10px 28px;
-      font-size: 1em;
+      padding: 10px;
+      margin-bottom: 10px;
       background: #333;
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    .agregar button {
+      width: 100%;
+      padding: 10px;
+      background: #0070f3;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .agregar button:hover { background: #005bb5; }
+
+    /* LISTA DE VIDEOS */
+    .lista { max-width: 600px; margin: 0 auto; }
+    .item {
+      background: #222;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .item h3 { margin-bottom: 8px; color: #adf; }
+    .link-box {
+      background: #333;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      word-break: break-all;
+      color: #7ef;
+      margin-bottom: 8px;
+    }
+    .item button {
+      padding: 6px 14px;
+      background: #444;
       color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-    }
-    .nav button:hover { background: #555; }
-    #contador {
-      margin-top: 10px;
-      color: #888;
       font-size: 0.9em;
     }
+    .item button:hover { background: #666; }
+    .copiado { color: #4f4; font-size: 0.85em; margin-left: 8px; display: none; }
   </style>
 </head>
 <body>
 
-  <h1>Mi Portal de Videos</h1>
-  <div id="titulo-video"></div>
+<h1>🎬 Mi Portal de Videos</h1>
 
-  <div id="frame-container">
-    <iframe id="iframe-video" allowfullscreen
-      allow="autoplay; fullscreen"></iframe>
-  </div>
+<div class="agregar">
+  <input id="inp-titulo" type="text" placeholder="Título del video" />
+  <input id="inp-src" type="text" placeholder="src del iframe (https://boe.sx/embed/...)" />
+  <button onclick="agregarVideo()">➕ Agregar y generar link</button>
+</div>
 
-  <div class="nav">
-    <button onclick="cambiar(-1)">⬅ Anterior</button>
-    <button onclick="cambiar(1)">Siguiente ➡</button>
-  </div>
-  <div id="contador"></div>
+<div class="lista" id="lista"></div>
 
-  <script>
-    // ── PON AQUÍ TUS IFRAMES DIRECTOS ──────────────────────
-    const videos = [
-      {
-        titulo: "Video 1",
-        src: "https://voe.sx/e/s9n70mpwd0ga"
-      },
-      {
-        titulo: "Video 2",
-        src: "https://voe.sx/e/d3zgxcj0xkaq"
-      },
-      {
-        titulo: "Video 3",
-        src: "https://voe.sx/e/s4gpakkchpsj"
-      }
-    ];
-    // ────────────────────────────────────────────────────────
+<script>
+  const BASE = window.location.origin + window.location.pathname.replace("index.html","") + "watch.html?v=";
 
-    let actual = 0;
+  function guardar(videos) {
+    localStorage.setItem("videos", JSON.stringify(videos));
+  }
 
-    function cargar(i) {
-      document.getElementById("titulo-video").textContent = videos[i].titulo;
-      document.getElementById("iframe-video").src = videos[i].src;
-      document.getElementById("contador").textContent =
-        "Video " + (i + 1) + " de " + videos.length;
+  function cargar() {
+    return JSON.parse(localStorage.getItem("videos") || "[]");
+  }
+
+  function agregarVideo() {
+    const titulo = document.getElementById("inp-titulo").value.trim();
+    const src = document.getElementById("inp-src").value.trim();
+    if (!titulo || !src) { alert("Pon el título y el src"); return; }
+
+    const videos = cargar();
+    const id = Date.now();
+    videos.push({ id, titulo, src });
+    guardar(videos);
+
+    document.getElementById("inp-titulo").value = "";
+    document.getElementById("inp-src").value = "";
+    renderizar();
+  }
+
+  function copiar(id) {
+    const link = BASE + id;
+    navigator.clipboard.writeText(link);
+    document.getElementById("cop-" + id).style.display = "inline";
+    setTimeout(() => document.getElementById("cop-" + id).style.display = "none", 2000);
+  }
+
+  function eliminar(id) {
+    const videos = cargar().filter(v => v.id !== id);
+    guardar(videos);
+    renderizar();
+  }
+
+  function renderizar() {
+    const videos = cargar();
+    const lista = document.getElementById("lista");
+    if (videos.length === 0) {
+      lista.innerHTML = "<p style='text-align:center;color:#555'>No hay videos aún.</p>";
+      return;
     }
+    lista.innerHTML = videos.map(v => `
+      <div class="item">
+        <h3>${v.titulo}</h3>
+        <div class="link-box">${BASE + v.id}</div>
+        <button onclick="copiar(${v.id})">📋 Copiar link</button>
+        <span class="copiado" id="cop-${v.id}">¡Copiado!</span>
+        <button onclick="eliminar(${v.id})" style="margin-left:8px;background:#700">🗑 Borrar</button>
+      </div>
+    `).join("");
+  }
 
-    function cambiar(dir) {
-      actual = (actual + dir + videos.length) % videos.length;
-      cargar(actual);
-    }
-
-    cargar(0);
-  </script>
-
+  renderizar();
+</script>
 </body>
 </html>
