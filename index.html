@@ -7,41 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #111; color: #fff; padding: 20px; }
-    h1 { text-align: center; margin-bottom: 20px; }
-
-    /* AGREGAR VIDEO */
-    .agregar {
-      background: #222;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .agregar input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #333;
-      border: none;
-      color: #fff;
-      border-radius: 6px;
-      font-size: 1em;
-    }
-    .agregar button {
-      width: 100%;
-      padding: 10px;
-      background: #0070f3;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    .agregar button:hover { background: #005bb5; }
-
-    /* LISTA DE VIDEOS */
+    h1 { text-align: center; margin-bottom: 24px; }
     .lista { max-width: 600px; margin: 0 auto; }
     .item {
       background: #222;
@@ -49,7 +15,7 @@
       padding: 14px;
       margin-bottom: 14px;
     }
-    .item h3 { margin-bottom: 8px; color: #adf; }
+    .item h3 { margin-bottom: 10px; color: #adf; }
     .link-box {
       background: #333;
       padding: 8px 10px;
@@ -61,87 +27,43 @@
     }
     .item button {
       padding: 6px 14px;
-      background: #444;
+      background: #0070f3;
       color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9em;
     }
-    .item button:hover { background: #666; }
+    .item button:hover { background: #005bb5; }
     .copiado { color: #4f4; font-size: 0.85em; margin-left: 8px; display: none; }
   </style>
 </head>
 <body>
+  <h1>🎬 Mi Portal de Videos</h1>
+  <div class="lista" id="lista">Cargando...</div>
 
-<h1>🎬 Mi Portal de Videos</h1>
+  <script>
+    const BASE = window.location.href.replace("index.html","").replace(/\/$/, "") + "/watch.html?v=";
 
-<div class="agregar">
-  <input id="inp-titulo" type="text" placeholder="Título del video" />
-  <input id="inp-src" type="text" placeholder="src del iframe (https://boe.sx/embed/...)" />
-  <button onclick="agregarVideo()">➕ Agregar y generar link</button>
-</div>
+    fetch("videos.json")
+      .then(r => r.json())
+      .then(videos => {
+        const lista = document.getElementById("lista");
+        lista.innerHTML = videos.map(v => `
+          <div class="item">
+            <h3>${v.titulo}</h3>
+            <div class="link-box">${BASE + v.id}</div>
+            <button onclick="copiar('${BASE + v.id}', 'cop-${v.id}')">📋 Copiar link</button>
+            <span class="copiado" id="cop-${v.id}">¡Copiado!</span>
+          </div>
+        `).join("");
+      });
 
-<div class="lista" id="lista"></div>
-
-<script>
-  const BASE = window.location.origin + window.location.pathname.replace("index.html","") + "watch.html?v=";
-
-  function guardar(videos) {
-    localStorage.setItem("videos", JSON.stringify(videos));
-  }
-
-  function cargar() {
-    return JSON.parse(localStorage.getItem("videos") || "[]");
-  }
-
-  function agregarVideo() {
-    const titulo = document.getElementById("inp-titulo").value.trim();
-    const src = document.getElementById("inp-src").value.trim();
-    if (!titulo || !src) { alert("Pon el título y el src"); return; }
-
-    const videos = cargar();
-    const id = Date.now();
-    videos.push({ id, titulo, src });
-    guardar(videos);
-
-    document.getElementById("inp-titulo").value = "";
-    document.getElementById("inp-src").value = "";
-    renderizar();
-  }
-
-  function copiar(id) {
-    const link = BASE + id;
-    navigator.clipboard.writeText(link);
-    document.getElementById("cop-" + id).style.display = "inline";
-    setTimeout(() => document.getElementById("cop-" + id).style.display = "none", 2000);
-  }
-
-  function eliminar(id) {
-    const videos = cargar().filter(v => v.id !== id);
-    guardar(videos);
-    renderizar();
-  }
-
-  function renderizar() {
-    const videos = cargar();
-    const lista = document.getElementById("lista");
-    if (videos.length === 0) {
-      lista.innerHTML = "<p style='text-align:center;color:#555'>No hay videos aún.</p>";
-      return;
+    function copiar(link, spanId) {
+      navigator.clipboard.writeText(link);
+      const el = document.getElementById(spanId);
+      el.style.display = "inline";
+      setTimeout(() => el.style.display = "none", 2000);
     }
-    lista.innerHTML = videos.map(v => `
-      <div class="item">
-        <h3>${v.titulo}</h3>
-        <div class="link-box">${BASE + v.id}</div>
-        <button onclick="copiar(${v.id})">📋 Copiar link</button>
-        <span class="copiado" id="cop-${v.id}">¡Copiado!</span>
-        <button onclick="eliminar(${v.id})" style="margin-left:8px;background:#700">🗑 Borrar</button>
-      </div>
-    `).join("");
-  }
-
-  renderizar();
-</script>
+  </script>
 </body>
 </html>
